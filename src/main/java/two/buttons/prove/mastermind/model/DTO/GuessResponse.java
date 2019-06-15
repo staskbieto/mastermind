@@ -27,7 +27,7 @@ public class GuessResponse {
     private Integer triesDone = 0;
 
     @Builder.Default
-    private Integer triesLeft = 0;
+    private Integer numberTries = 0;
 
     @Builder.Default
     private List<Guess> historic = Collections.emptyList();

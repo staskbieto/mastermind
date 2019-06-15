@@ -1,9 +1,11 @@
 package two.buttons.prove.mastermind.model;
+
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import two.buttons.prove.mastermind.beans.ColorEnum;
+
 import javax.validation.constraints.Size;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +36,5 @@ public class Game {
     @Builder.Default
     private Integer triesDone = 0;
 
-    @Builder.Default
-    private Integer triesLeft = 0;
+    private Integer numberTries;
 }

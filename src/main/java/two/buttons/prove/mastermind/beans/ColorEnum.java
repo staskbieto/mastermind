@@ -1,6 +1,8 @@
 package two.buttons.prove.mastermind.beans;
 
 
+import java.util.Random;
+
 public enum ColorEnum {
     RED,
     GREEN,
@@ -9,5 +11,11 @@ public enum ColorEnum {
     BROWN,
     ORANGE,
     BLACK,
-    WHITE
+    WHITE;
+
+
+    public static ColorEnum getRandomColor() {
+        Random random = new Random();
+        return values()[random.nextInt(values().length)];
+    }
 }

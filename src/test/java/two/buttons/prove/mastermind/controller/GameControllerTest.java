@@ -1,35 +1,30 @@
 package two.buttons.prove.mastermind.controller;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DBObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
-import org.yaml.snakeyaml.util.ArrayUtils;
 import two.buttons.prove.mastermind.BaseTest;
 import two.buttons.prove.mastermind.beans.ColorEnum;
 import two.buttons.prove.mastermind.model.DTO.GuessResponse;
 import two.buttons.prove.mastermind.model.Game;
 import two.buttons.prove.mastermind.repository.GameRepository;
 
-import java.awt.*;
 import java.util.Arrays;
-import java.util.List;
 
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.Assert.assertTrue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @AutoConfigureMockMvc
@@ -39,16 +34,18 @@ public class GameControllerTest extends BaseTest {
     private MockMvc mockMvc;
 
     @Autowired
-    GameRepository gameRepository;
+    private GameRepository gameRepository;
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     @Before
     public void pushDataToTestDB(){
+
+        gameRepository.deleteAll();
         gameRepository.save(Game.builder()
                 .key(123436475L)
                 .code(
@@ -56,26 +53,30 @@ public class GameControllerTest extends BaseTest {
                 )
                 .build()
         );
-    }
 
-    @After
-    public void resetTestDB() throws Exception {
-        gameRepository.deleteAll();
-    }
+        gameRepository.save(Game.builder()
+                .key(4237433475L)
+                .code(
+                        Arrays.asList(new ColorEnum[]{ColorEnum.RED, ColorEnum.YELLOW, ColorEnum.RED, ColorEnum.GREEN})
+                )
+                .isFinished(true)
+                .build()
+        );
 
+    }
 
     @Test
     public void initGameOk() throws Exception{
 
         MvcResult result = mockMvc.perform(get("/init")
         )
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
                 .andReturn()
                 ;
 
         Long gameId = Long.parseLong(result.getResponse().getContentAsString());
-        assertTrue(gameRepository.findById(gameId).isPresent());
+        assertTrue(gameRepository.findByKey(gameId).isPresent());
 
     }
 
@@ -85,16 +86,17 @@ public class GameControllerTest extends BaseTest {
         String jsonString = new JSONObject()
                 .put("gameKey","123436475")
                 .put("guess",new JSONArray()
-                        .put("BLUE")
+                        .put("YELLOW")
                         .put("RED")
                         .put("RED")
                         .put("GREEN")
                 )
                 .toString();
-
         MvcResult result = mockMvc.perform(post("/guess")
-                .contentType(MediaType.APPLICATION_JSON_UTF8).content(jsonString)
-        )        .andExpect(status().isOk())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonString)
+        )
+                .andExpect(status().isOk())
                 .andReturn()
                 ;
 
@@ -107,14 +109,57 @@ public class GameControllerTest extends BaseTest {
     }
 
 
+    @Test
+    public void guessOkFinished() throws Exception{
+        String jsonString = new JSONObject()
+                .put("gameKey","123436475")
+                .put("guess",new JSONArray()
+                        .put("BLACK")
+                        .put("BLACK")
+                        .put("RED")
+                        .put("GREEN")
+                )
+                .toString();
+        MvcResult result = mockMvc.perform(post("/guess")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonString)
+        )
+                .andExpect(status().isOk())
+                .andReturn()
+                ;
+
+        GuessResponse guessResponse = objectMapper.readValue( result.getResponse().getContentAsString(), GuessResponse.class);
+
+        assertTrue(guessResponse.getHistoric().size() == 1);
+        assertTrue(guessResponse.getExact() == 4);
+        assertTrue(guessResponse.getNear() == 0);
+        assertTrue(guessResponse.getIsFinished());
+    }
+
+    @Test
+    public void guessFailFinished() throws Exception{
+        String jsonString = new JSONObject()
+                .put("gameKey","4237433475")
+                .put("guess",new JSONArray()
+                        .put("YELLOW")
+                        .put("RED")
+                        .put("RED")
+                        .put("GREEN")
+                )
+                .toString();
+        ResultActions result = mockMvc.perform(post("/guess")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonString)
+        )
+                .andExpect(status().isForbidden());
+    }
 
     @Test
     public void guessFailGameNotFound() throws Exception {
-
         String jsonString = new JSONObject()
-                .put("gameKey", "555555")
-                .put("guess", new JSONArray()
-                        .put("BLUE")
+                .put("gameKey","9237433475")
+                .put("guess",new JSONArray()
+                        .put("YELLOW")
                         .put("RED")
                         .put("RED")
                         .put("GREEN")
@@ -122,7 +167,9 @@ public class GameControllerTest extends BaseTest {
                 .toString();
 
         ResultActions result = mockMvc.perform(post("/guess")
-                .contentType(MediaType.APPLICATION_JSON_UTF8).content(jsonString)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonString)
+
         )        .andExpect(status().isNotFound())
                 ;
     }
