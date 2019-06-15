@@ -1,0 +1,10 @@
+spring:
+  data:
+    mongodb:
+      host : localhost
+      port : 27018
+      username : twobuttons
+      password : 21b0tt0n2
+      database : mastermind
+
+
