@@ -33,8 +33,5 @@ public class Game {
     @Builder.Default
     private List<Guess> historic = Collections.emptyList();
 
-    @Builder.Default
-    private Integer triesDone = 0;
 
-    private Integer numberTries;
 }

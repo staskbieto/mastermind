@@ -5,6 +5,7 @@ import two.buttons.prove.mastermind.beans.ColorEnum;
 import two.buttons.prove.mastermind.model.DTO.GuessResponse;
 import two.buttons.prove.mastermind.model.Game;
 import two.buttons.prove.mastermind.model.Guess;
+import two.buttons.prove.mastermind.properties.GameProperties;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +13,20 @@ import java.util.List;
 @Service
 public class GuessServiceImpl implements GuessService {
 
+    private final GameProperties gameProperties;
+
+    public GuessServiceImpl(GameProperties gameProperties) {
+        this.gameProperties = gameProperties;
+    }
+
     @Override
     public GuessResponse builGuessResponse(Game game, Guess guess){
         return GuessResponse.builder()
                 .exact(guess.getExact())
                 .near(guess.getNear())
                 .isFinished(game.getIsFinished())
-                .triesDone(game.getNumberTries())
-                .numberTries(game.getNumberTries())
+                .triesDone(game.getHistoric().size())
+                .numberTries(gameProperties.getNumberTries())
                 .historic(game.getHistoric())
                 .build();
     }

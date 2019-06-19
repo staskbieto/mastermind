@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -17,15 +16,16 @@ import two.buttons.prove.mastermind.BaseTest;
 import two.buttons.prove.mastermind.beans.ColorEnum;
 import two.buttons.prove.mastermind.model.DTO.GuessResponse;
 import two.buttons.prove.mastermind.model.Game;
+import two.buttons.prove.mastermind.model.Guess;
 import two.buttons.prove.mastermind.repository.GameRepository;
 
 import java.util.Arrays;
 
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
 @AutoConfigureMockMvc
@@ -38,11 +38,7 @@ public class GameControllerTest extends BaseTest {
     private GameRepository gameRepository;
 
     @Autowired
-    private MongoTemplate mongoTemplate;
-
-    @Autowired
     private ObjectMapper objectMapper;
-
 
 
     @Before
@@ -61,6 +57,12 @@ public class GameControllerTest extends BaseTest {
                 .key(4237433475L)
                 .code(
                         Arrays.asList(new ColorEnum[]{ColorEnum.RED, ColorEnum.YELLOW, ColorEnum.RED, ColorEnum.GREEN})
+                )
+                .historic(
+                        Arrays.asList(
+                                Guess.builder().exact(0).near(1).guess(Arrays.asList(new ColorEnum[]{ColorEnum.BLACK, ColorEnum.BLACK, ColorEnum.YELLOW, ColorEnum.RED})).build(),
+                                Guess.builder().exact(4).near(0).guess(Arrays.asList(new ColorEnum[]{ColorEnum.RED, ColorEnum.YELLOW, ColorEnum.RED, ColorEnum.GREEN})).build()
+                        )
                 )
                 .isFinished(true)
                 .build()
@@ -186,6 +188,31 @@ public class GameControllerTest extends BaseTest {
 
         )        .andExpect(status().isNotFound())
                 ;
+    }
+
+
+    @Test
+    public void historicOK() throws Exception {
+        ResultActions result = mockMvc.perform(get("/historic/4237433475")
+                .header("Authorization", basicDigestHeaderValue).accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+
+        )        .andExpect(status().isOk())
+                .andExpect(jsonPath("$.*",hasSize(2)));
+
+                ;
+    }
+
+
+    @Test
+    public void historicFailNotFound() throws Exception {
+        ResultActions result = mockMvc.perform(get("/historic/42373342333475")
+                .header("Authorization", basicDigestHeaderValue).accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+
+        )        .andExpect(status().isNotFound());
+
+        ;
     }
 
 }

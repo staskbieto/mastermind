@@ -7,7 +7,6 @@ import two.buttons.prove.mastermind.model.DTO.GuessRequest;
 import two.buttons.prove.mastermind.model.DTO.GuessResponse;
 import two.buttons.prove.mastermind.model.Game;
 import two.buttons.prove.mastermind.model.Guess;
-import two.buttons.prove.mastermind.properties.GameProperties;
 import two.buttons.prove.mastermind.repository.GameRepository;
 
 import java.util.ArrayList;
@@ -21,12 +20,10 @@ public class GameServiceImpl implements GameService {
 
     private final GuessService guessService;
     private final GameRepository gameRepository;
-    private final GameProperties gameProperties;
 
-    public GameServiceImpl(GuessService guessService, GameRepository gameRepository, GameProperties gameProperties) {
+    public GameServiceImpl(GuessService guessService, GameRepository gameRepository) {
         this.guessService = guessService;
         this.gameRepository = gameRepository;
-        this.gameProperties = gameProperties;
     }
 
 
@@ -36,7 +33,6 @@ public class GameServiceImpl implements GameService {
         Game createdGame = Game.builder()
                 .key(generateGameId())
                 .code(generateRandomCode())
-                .numberTries(gameProperties.getNumberTries())
                 .build()
                 ;
 
@@ -61,10 +57,18 @@ public class GameServiceImpl implements GameService {
         }
 
         game.getHistoric().add(guess);
-        game.setTriesDone(game.getTriesDone()+1);
         gameRepository.save(game);
 
         return guessService.builGuessResponse(game,guess);
+    }
+
+    @Override
+    public List<Guess> getHistoric(Long gameKey) throws GameNotFoundException {
+
+        Game game  = gameRepository.findByKey(gameKey)
+                .orElseThrow(GameNotFoundException::new);
+        return game.getHistoric();
+
     }
 
     @Override
