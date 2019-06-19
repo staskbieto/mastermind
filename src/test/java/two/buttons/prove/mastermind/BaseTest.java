@@ -1,5 +1,6 @@
 package two.buttons.prove.mastermind;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +18,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 })
 public abstract class BaseTest {
     public static final String PROFILE_TEST = "TEST";
+    public static final String basicDigestHeaderValue = "Basic " + new String(Base64.encodeBase64(("admin:4dm1n4dm1n").getBytes()));
 
 
     protected MockRestServiceServer mockServer;

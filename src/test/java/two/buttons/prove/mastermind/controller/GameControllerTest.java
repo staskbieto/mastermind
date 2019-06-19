@@ -1,6 +1,7 @@
 package two.buttons.prove.mastermind.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -42,6 +43,8 @@ public class GameControllerTest extends BaseTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+
+
     @Before
     public void pushDataToTestDB(){
 
@@ -68,7 +71,9 @@ public class GameControllerTest extends BaseTest {
     @Test
     public void initGameOk() throws Exception{
 
+
         MvcResult result = mockMvc.perform(get("/init")
+                .header("Authorization", basicDigestHeaderValue).accept(MediaType.APPLICATION_JSON)
         )
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
@@ -92,7 +97,10 @@ public class GameControllerTest extends BaseTest {
                         .put("GREEN")
                 )
                 .toString();
+
+        String basicDigestHeaderValue = "Basic " + new String(Base64.encodeBase64(("admin:4dm1n4dm1n").getBytes()));
         MvcResult result = mockMvc.perform(post("/guess")
+                .header("Authorization", basicDigestHeaderValue).accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonString)
         )
@@ -120,7 +128,9 @@ public class GameControllerTest extends BaseTest {
                         .put("GREEN")
                 )
                 .toString();
+
         MvcResult result = mockMvc.perform(post("/guess")
+                .header("Authorization", basicDigestHeaderValue).accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonString)
         )
@@ -148,6 +158,8 @@ public class GameControllerTest extends BaseTest {
                 )
                 .toString();
         ResultActions result = mockMvc.perform(post("/guess")
+                .header("Authorization", basicDigestHeaderValue).accept(MediaType.APPLICATION_JSON)
+
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonString)
         )
@@ -167,6 +179,8 @@ public class GameControllerTest extends BaseTest {
                 .toString();
 
         ResultActions result = mockMvc.perform(post("/guess")
+                .header("Authorization", basicDigestHeaderValue).accept(MediaType.APPLICATION_JSON)
+
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonString)
 
